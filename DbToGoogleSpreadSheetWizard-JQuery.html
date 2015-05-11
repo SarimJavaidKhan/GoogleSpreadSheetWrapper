@@ -1,0 +1,71 @@
+<html>
+	<head>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<h1><center>Database To Google SpreadSheet<center></h1>
+		
+		<script>
+			$('document').ready(function(){
+				$('#submitBtn').click(function(){
+					window.email = $('#emailTxt').val();
+					window.password = $('#passwordTxt').val();
+					
+					$.get("http://localhost:8090/GoogleDocs-SpreadSheet-API/GoogleSpreadSheetAPI-REST.php?getSpreadSheets=1&email="+ window.email + "&pass=" + window.password,function(data,status){
+						if(status == "success"){
+							//hideLoginFormControls();
+							$("#spreadSheetsTbl").remove();
+							//$("#spreadSheetsTbl").show();
+							$("body").append("<table id='spreadSheetsTbl' border='1'> <th>Number</th><th>Spread Sheets</th></table>");
+							var sheetsArr = data.split(",");
+							window.sheetsArrayLength = sheetsArr.length;
+							
+							for(i=0 ; i < sheetsArr.length; i++){
+								if(sheetsArr[i] != undefined && sheetsArr[i] !=""){
+									$("#spreadSheetsTbl").append("<tr id='row" + i + "'><td>" + i + "</td><td>" + sheetsArr[i] + "</td></tr>");
+									$("#row" + i).click(function(event){
+										//console.log(event.currentTarget.id);
+										var spreadSheetName = $("#" + event.currentTarget.id + " td:eq(1)").text();
+										$.get("http://localhost:8090/GoogleDocs-SpreadSheet-API/GoogleSpreadSheetAPI-REST.php?getSpreadSheetId=1&email="+ window.email + "&pass=" + window.password + "&spName=" + spreadSheetName,function(data,status){
+											console.log(data);
+											//Got the spread sheet id of a particular spread sheet in data
+											if(data == ""){
+												alert("This sheet has some configuration issues, see your google spreadsheets");
+											}	
+										});
+									});
+								}
+							}	
+						}
+					});
+				});
+			});
+			
+			function onClickRow(someParam){
+				//window.selectedSpreadSheet = someParam;
+				//alert(someParam);
+			}
+			
+			function hideLoginFormControls(){
+				$("#loginFrmTbl").remove();
+			}
+			
+		</script>
+	</head>
+	
+	<body>
+		<form id="loginFrm" name="loginFrm">
+			<table id='loginFrmTbl'>
+				<tr>
+					<td>Enter Gmail Id:</td>
+					<td><input type='text' id='emailTxt' name='emailTxt'/></td>
+				</tr>
+				<tr>
+					<td>Enter Password:</td>
+					<td><input type='password' id='passwordTxt' name='passwordTxt'/></td>
+				</tr>
+				<tr>
+					<td><input type='button' id='submitBtn' name='submitBtn' value='Login'/></td>
+				</tr>
+			</table>
+		</form>
+	</body>
+</html>
