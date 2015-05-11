@@ -35,9 +35,8 @@ else if(isset($_GET['getSpreadSheets']))
 			
 			$spreadSheetOps = new SpreadSheetOps($email,$password);
 			$spreadSheetOps->authenticate();
-			$token = $spreadSheetOps->getToken();
 			$myTestArray = array();
-			$myTestArray[] = $spreadSheetOps->getSpreadSheetNames($token);
+			$myTestArray[] = $spreadSheetOps->getSpreadSheetNames();
 			
 			for($i=0 ; $i< count($myTestArray[0]) ; $i++)
 				echo $myTestArray[0][$i] . ",";
