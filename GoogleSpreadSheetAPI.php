@@ -211,11 +211,11 @@ class SpreadSheetOps
 		WriteError("SpreadSheetOps.getColumnIDs()->columnIds are empty");
 	}
 	
-	public function getSpreadSheetNames($token)
+	public function getSpreadSheetNames()
 	{
 		$url = ALL_SS_URL;
 		$headers = array(
-			"Authorization: GoogleLogin auth=" . $token,
+			"Authorization: GoogleLogin auth=" . $this->token,
 			"GData-Version: 3.0"
 		);
 		
@@ -247,7 +247,8 @@ class SpreadSheetOps
 		}
 	}
 	
-	public function addRow($data){
+	public function addRow($data)
+	{
 		$url = ADD_DATA_ROW_URL . $this->spreadSheetId . "/" . $this->workSheetId . "/private/full";
 		
 		if(!empty($url)) 
@@ -329,6 +330,27 @@ class SpreadSheetOps
 				else
 					WriteError("SpreadSheetOps.addRow()-> Row not added successfully");
 			}
+		}
+	}
+	
+	public function getSsUrlForBrowser($groupName = "folio3.com")
+	{		
+		if(isset($this->spreadSheetId))
+		{
+			if($groupName != null)
+			{
+				$groupName = "a/" . $groupName ;
+				$url = "https://docs.google.com/" . $groupName . BROWSER_URL_COMMON . $this->spreadSheetId; 
+			}
+			else
+				$url = "https://docs.google.com" . BROWSER_URL_COMMON . $this->spreadSheetId;;
+				
+			echo $url;
+			return $url;
+		}
+		else
+		{
+			return 0;
 		}
 	}
 	
