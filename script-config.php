@@ -17,6 +17,9 @@ define("CELLS_DATA_URL","https://spreadsheets.google.com/feeds/cells/");
 define("ADD_DATA_ROW_URL","https://spreadsheets.google.com/feeds/list/");
 define("ALL_SS_URL","https://spreadsheets.google.com/feeds/spreadsheets/private/full");
 
+//URLs for end users
+define("BROWSER_URL_COMMON", "/spreadsheets/d/" );
+
 //logging settings
 if (!defined("LOGFILE")){ 
 	define("LOGFILE", dirname(__FILE__)."/script-log-". date('Y-m-d', time()) .".txt");
