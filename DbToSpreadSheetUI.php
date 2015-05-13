@@ -15,7 +15,7 @@ include_once 'Main.php';
 		$query		= $_POST['queryTxt'];
 		
 		//you can call this method with null values. For null variables default values are set in scripts-config.php
-		Main::DbToGoogleSpreadSheet($host,$dbUser,$dbPassword,$dbName,$email,$gmailPass,$spreadSheet,$workSheet,$query);
+		echo "Worksheet Updated Url: " . Main::DbToGoogleSpreadSheet($host,$dbUser,$dbPassword,$dbName,$email,$gmailPass,$spreadSheet,$workSheet,$query);
 		
 		unset($_POST['submitBtn']);	
 	}

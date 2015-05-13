@@ -76,11 +76,27 @@ class DbToSpreadSheet
 			WriteInfo("DbToSpreadSheet.dumpDbToSpreadSheet->Query executed successfully.");
 		}
 		
+		//Getting headers of the result fetched from the query
+		$headerDbRow = mysqli_fetch_assoc($tableDataResultSet);
+		$headerRow = array();
+		$i=0;
+		while($i != count($headerDbRow)){
+			$headerRow[] = key($headerDbRow);
+			next($headerDbRow);
+			$i++;
+		}
+		//Pushing the headers to the spreadsheet
+		$this->spreadSheetOps->addHeaderRow($headerRow);
+		
+		mysqli_data_seek($tableDataResultSet, 0);
+		
+		//Getting further data from the query and dumping to spreadsheet.
 		while($row = mysqli_fetch_array($tableDataResultSet , MYSQL_ASSOC)){
 			$this->spreadSheetOps->addRow($row);
 		}
 		
 		$this->closeDb();
+		return $this->spreadSheetOps->getUpdatedSheetUrl();
 	}
 }
 

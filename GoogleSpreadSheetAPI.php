@@ -25,6 +25,8 @@ class SpreadSheetOps
 	private $workSheetName;
 	private $workSheetId;
 	
+	public $worksheetUrl;
+	
 	public function __construct($email,$password)
 	{
 		if($email == null)
@@ -127,10 +129,13 @@ class SpreadSheetOps
 		if($status == 200){
 			$spreadSheetXML = simplexml_load_string($response);
 			if($spreadSheetXML->entry){
-				$this->spreadSheetId = basename(trim($spreadSheetXML->entry[0]->id));
-				WriteInfo("SpreadSheetOps.setSpreadSheetId()->Unique Id of spreadsheet successfully retrieved");
-				return $this->spreadSheetId;
-				//echo "SpreadSheetId: " . $this->spreadSheetId . "<br/>";
+				foreach($spreadSheetXML->entry as $entry){
+					if($entry->title == $spreadSheetName){
+						$this->spreadSheetId = basename(trim($entry->id));
+						WriteInfo("SpreadSheetOps.setSpreadSheetId()->Unique Id of spreadsheet successfully retrieved");
+						return $this->spreadSheetId;
+					}
+				}
 			}
 		}
 		else{
@@ -290,10 +295,9 @@ class SpreadSheetOps
 		}
 	}
 	
-	public function addHeaderRow($data)
+	public function addHeaderRow($headerRow)
 	{
-		$url = ADD_DATA_ROW_URL . $this->spreadSheetId . "/" . $this->workSheetId . "/private/full";
-		
+		$url = CELLS_DATA_URL . $this->spreadSheetId . "/" . $this->workSheetId . "/private/full";
 		if(!empty($url)) 
 		{
 			$headers = array(
@@ -303,15 +307,13 @@ class SpreadSheetOps
 			);
 
 			$columnIDs = $this->getColumnIDs();
+			$headerColsCount = count($headerRow);
 			
-			if($columnIDs) 
+			for($i=0 ; $i < $headerColsCount ; $i++ )
 			{
-				$fields = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">';
-				foreach($data as $key => $value) {
-					$key = $this->formatColumnID($key);
-					if(in_array($key, $columnIDs))
-						$fields .= "<gsx:$key><![CDATA[$value]]></gsx:$key>";
-				}
+				$fields = "";
+				$fields = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gs="http://schemas.google.com/spreadsheets/2006">';
+				$fields .= "<gs:cell row='1' col='" . ($i+1) . "' inputValue='$headerRow[$i]'>$headerRow[$i]</gs:cell>";
 				$fields .= '</entry>';
 
 				$curl = curl_init();
@@ -333,24 +335,45 @@ class SpreadSheetOps
 		}
 	}
 	
-	public function getSsUrlForBrowser($groupName = "folio3.com")
-	{		
-		if(isset($this->spreadSheetId))
+	public function getUpdatedSheetUrl()
+	{	
+		$url = WORKSHEETS_URL . $this->spreadSheetId . "/private/full?title=" . urlencode($this->workSheetName);
+		$headers = array(
+							"Authorization: GoogleLogin auth=" . $this->token,
+							"GData-Version: 3.0"
+		);
+		
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_URL, $url);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+		$response = curl_exec($curl);
+		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		
+		if($status == 200)
 		{
-			if($groupName != null)
+			$workSheetXML = simplexml_load_string($response);
+			
+			//echo $workSheetXML->link[0]['href'];
+			if($workSheetXML->entry)
 			{
-				$groupName = "a/" . $groupName ;
-				$url = "https://docs.google.com/" . $groupName . BROWSER_URL_COMMON . $this->spreadSheetId; 
-			}
-			else
-				$url = "https://docs.google.com" . BROWSER_URL_COMMON . $this->spreadSheetId;;
-				
-			echo $url;
-			return $url;
+				foreach($workSheetXML->entry[0]->link as $link){
+					if($link['type'] == "text/csv"){
+						$wsUrl = $link['href'];
+						$leftSide = str_replace("/export","#",strtok($wsUrl,"?"));
+						$rightSide = parse_str(str_replace("/export?","",substr($wsUrl,strpos($wsUrl,"/export?"))));
+						
+						$this->worksheetUrl = $leftSide . "gid=" . $gid;
+						return $this->worksheetUrl;
+					}
+				}
+				WriteInfo("SpreadSheetOps.getUpdatedSheetUrl()->Direct url to editable worksheet");
+			}	
 		}
 		else
 		{
-			return 0;
+			WriteError("SpreadSheetOps.setSpreadSheetId()->Worksheet Id retrieval failed");
 		}
 	}
 	

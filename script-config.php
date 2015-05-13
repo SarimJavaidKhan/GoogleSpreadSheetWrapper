@@ -5,10 +5,10 @@
 include_once 'logging.php';
 
 //Google Api Urls Settings
-define("GMAIL_ID","sarimj@folio3.com");
-define("GMAIL_PASSWORD","FolioGuy01");
-define("SPREADSHEET","PhpSheet2");
-define("WORKSHEET","Sheet2");
+define("GMAIL_ID","gmailid@gmail.com");
+define("GMAIL_PASSWORD","gmailpass");
+define("SPREADSHEET","PhpSheet");
+define("WORKSHEET","Sheet3");
 
 define("AUTH_URL","https://www.google.com/accounts/ClientLogin");
 define("SPREADSHEETS_URL","https://spreadsheets.google.com/feeds/spreadsheets/private/full?title=");

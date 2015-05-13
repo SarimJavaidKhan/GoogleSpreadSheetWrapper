@@ -6,7 +6,7 @@ class Main
 	public static function DbToGoogleSpreadSheet($host,$dbUser,$dbPassword,$dbName,$email,$gmailPass,$spreadSheet,$workSheet,$query)
 	{
 		$dbToSpreadSheetObj = new DbToSpreadSheet($host,$dbUser,$dbPassword,$dbName,$email,$gmailPass,$spreadSheet,$workSheet);
-		$dbToSpreadSheetObj->dumpDbToSpreadSheet($query);
+		return $dbToSpreadSheetObj->dumpDbToSpreadSheet($query);
 		
 		//The other way, passing nulls
 		//$dbToSpreadSheetObj = new DbToSpreadSheet(null,null,null,null,null,null,null,null);
@@ -25,6 +25,10 @@ class Main
 	-ws			[WORKSHEET]
 	-query 		[QUERY]
 	*******/
+	
+	/***
+		Returned Value: Updated Worksheet url
+	***/
 	public static function execute($args)
 	{
 		$host 			= null;
@@ -36,11 +40,12 @@ class Main
 		$spreadSheet	= null;
 		$workSheet		= null;	
 		$query 			= null;
-		
+			
+		$url = null;
 		try
 		{
 			echo WriteInfo('Starting at ' . date('m/d/Y h:i:s a', time()) . "\n");
-			
+			echo "Dumping...\n";
 			$argsSize = count($args);
 			for($i=1 ; $i<$argsSize ; $i=$i+2)
 			{
@@ -85,15 +90,16 @@ class Main
 				
 			}
 			
-			Main::DbToGoogleSpreadSheet($host,$dbUser,$dbPassword,$dbName,$email,$gmailPass,$spreadSheet,$workSheet,$query);
+			$url = Main::DbToGoogleSpreadSheet($host,$dbUser,$dbPassword,$dbName,$email,$gmailPass,$spreadSheet,$workSheet,$query);
 			
-			echo WriteInfo('Ending at ' . date('m/d/Y h:i:s a', time()) . "\n");
+			echo WriteInfo("Worksheet Updated: ". $url);
+			echo WriteInfo('Ending at ' . date('m/d/Y h:i:s a', time()) . "\n");			
 		}
 		catch(Exception $e)
 		{
 			echo WriteError($e->getMessage());
 		}
-		
+		return $url;
 	}
 }
 if(isset($argv))
