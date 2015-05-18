@@ -252,6 +252,42 @@ class SpreadSheetOps
 		}
 	}
 	
+	public function getWorkSheetNames()
+	{
+		$url = WORKSHEETS_URL . $this->spreadSheetId . "/private/full";
+		$headers = array(
+			"Authorization: GoogleLogin auth=" . $this->token,
+			"GData-Version: 3.0"
+		);
+		
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_URL, $url);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+		$response = curl_exec($curl);
+
+		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+		
+		if($status == 200) 
+		{
+			$workSheetNames = array();
+			$xml = simplexml_load_string($response);
+			
+			if($xml->entry) 
+			{
+				$columnSize = sizeof($xml->entry);
+				//echo "Column Size" . $columnSize;
+				for($c = 0; $c < $columnSize; ++$c)
+					$workSheetNames[] = $xml->entry[$c]->title;
+			}
+			
+			WriteInfo("SpreadSheetOps.getWorkSheetNames->WorkSheet names for a spreadsheetid");
+			return $workSheetNames;
+		}
+	}
+	
 	public function addRow($data)
 	{
 		$url = ADD_DATA_ROW_URL . $this->spreadSheetId . "/" . $this->workSheetId . "/private/full";

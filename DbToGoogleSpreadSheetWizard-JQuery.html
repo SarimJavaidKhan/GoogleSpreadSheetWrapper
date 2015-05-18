@@ -1,40 +1,126 @@
 <html>
 	<head>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<script src="http://fgnass.github.io/spin.js/spin.min.js"></script>
 		<h1><center>Database To Google SpreadSheet<center></h1>
-		
+		<div id='spinLoad'></div>
+		<style>
+		.ssLabel{
+			position : absolute;
+			left : 0px;
+			top : 150px
+		}
+		.ssCss{
+			position: absolute;
+			left : 0px;
+			top : 210px;
+			background-color : #b0e0e6
+		}
+		.wsLabel{
+			position : absolute;
+			top : 220px;
+			left : 0px
+		}
+		.wsCss{
+			position: absolute;
+			left : 0px;
+			top : 275px;
+			background-color : #b0e0e6
+		}
+		.dbConfigLabelCss{
+			position: absolute;
+			left: 0px;
+			top: 285px;
+		}
+		.dbConfigFrmCss{
+			position: absolute;
+			left : 0px;
+			top : 340px;
+			background-color : #b0e0e6
+		}
+		.dumpBtnCss{
+			background-color : #b0e0e6
+		}
+		</style>
 		<script>
 			$('document').ready(function(){
+				$("#dbConfigFrm").hide();
 				$('#submitBtn').click(function(){
+					var target = $("#spinLoad").get(0);
+					var spinner = new Spinner().spin(target);
 					window.email = $('#emailTxt').val();
 					window.password = $('#passwordTxt').val();
 					
 					$.get("http://localhost:8090/GoogleDocs-SpreadSheet-API/GoogleSpreadSheetAPI-REST.php?getSpreadSheets=1&email="+ window.email + "&pass=" + window.password,function(data,status){
 						if(status == "success"){
-							//hideLoginFormControls();
+							$("#spinLoad").hide();
+							hideLoginFormControls();
 							$("#spreadSheetsTbl").remove();
-							//$("#spreadSheetsTbl").show();
-							$("body").append("<table id='spreadSheetsTbl' border='1'> <th>Number</th><th>Spread Sheets</th></table>");
+							$("body").append("<h1 class='ssLabel'>Select Spread Sheet</h1>");
+							$("body").append("<select class='ssCss' id='spreadSheetsTbl'>");
 							var sheetsArr = data.split(",");
 							window.sheetsArrayLength = sheetsArr.length;
 							
+							$("#spreadSheetsTbl").append("<option value='' selected disabled>select</option>");
 							for(i=0 ; i < sheetsArr.length; i++){
 								if(sheetsArr[i] != undefined && sheetsArr[i] !=""){
-									$("#spreadSheetsTbl").append("<tr id='row" + i + "'><td>" + i + "</td><td>" + sheetsArr[i] + "</td></tr>");
-									$("#row" + i).click(function(event){
-										//console.log(event.currentTarget.id);
-										var spreadSheetName = $("#" + event.currentTarget.id + " td:eq(1)").text();
-										$.get("http://localhost:8090/GoogleDocs-SpreadSheet-API/GoogleSpreadSheetAPI-REST.php?getSpreadSheetId=1&email="+ window.email + "&pass=" + window.password + "&spName=" + spreadSheetName,function(data,status){
-											console.log(data);
-											//Got the spread sheet id of a particular spread sheet in data
-											if(data == ""){
-												alert("This sheet has some configuration issues, see your google spreadsheets");
-											}	
-										});
-									});
+									$("#spreadSheetsTbl").append("<option id='row" + i + "' value='" + sheetsArr[i] + "'>" + sheetsArr[i] + "</option>");
 								}
 							}	
+							$("body").append("</select>");
+							
+							$("#spreadSheetsTbl").bind("change",function(event){
+								$("#spinLoad").show();
+								var spreadSheetName = $(this).val();
+								window.spreadSheetName = spreadSheetName;
+								
+								$.get("http://localhost:8090/GoogleDocs-SpreadSheet-API/GoogleSpreadSheetAPI-REST.php?getWorkSheets=1&email="+ window.email + "&pass=" + window.password + "&sheetName=" + spreadSheetName,function(data,status){
+									$("#spinLoad").hide();
+									console.log(data);
+									$("#workSheetsTbl").remove();
+									$("body").append("<h1 class='wsLabel'>Select Work Sheet</h1>");
+									$("body").append("<select class='wsCss' id='workSheetsTbl'>");
+									var workSheetsArr = data.split(",");
+									$("#workSheetsTbl").append("<option value='' selected disabled>select</option>");
+									for(j=0; j < workSheetsArr.length ; j++){
+										if(workSheetsArr[j] != undefined && workSheetsArr[j] != ""){
+											$("#workSheetsTbl").append("<option id='wsrow" + j + "' value='" + workSheetsArr[j] + "'>" + workSheetsArr[j] + "</option>");
+										}
+									}
+									
+									$("#workSheetsTbl").bind("change",function(event){
+										var workSheetName = $(this).val();
+										window.workSheetName = workSheetName;
+										$("body").append("<h1 class='dbConfigLabelCss'>Enter Database Configuration</h1>");
+										$("#dbConfigFrm").show();
+									});
+									
+									//Got the spread sheet id of a particular spread sheet in data
+									if(data == ""){
+										alert("This sheet has some configuration issues, see your google spreadsheets");
+									}	
+								});
+							});
 						}
+					});
+				});
+				
+				//Final hit to the service to dump database data to spreadsheet
+				$("#dumpBtn").click(function(){
+					$("#spinLoad").show();
+					var host = $("#hostTxt").val();
+					var dbUser = $("#dbUserTxt").val();
+					var dbPass = $("#dbPassTxt").val();
+					var dbName = $("#dbNameTxt").val();
+					var query = $("#queryTxt").val();
+					
+					$.get("http://localhost:8090/GoogleDocs-SpreadSheet-API/GoogleSpreadSheetAPI-REST.php?dumpDb=1&email="+ window.email + "&pass=" + window.password + "&host=" + host + "&dbUser=" + dbUser + "&dbPass=" + dbPass + "&dbName=" + dbName + "&spName=" + window.spreadSheetName + "&wsName=" + window.workSheetName + "&dbQuery=" + query ,function(data,status){
+						if(status == "success"){
+							$("#spinLoad").hide();
+							
+							$("body").append("<div id='updatedUrl' class='dumpBtnCss'></div>");
+							$("#updatedUrl").text("Updated Url: " + data);
+						}	
 					});
 				});
 			});
@@ -48,10 +134,21 @@
 				$("#loginFrmTbl").remove();
 			}
 			
+			function dumpTopVariables(){
+				console.log(window.email);
+				console.log(window.password);
+				console.log(window.spreadSheetName);
+				console.log(window.workSheetName);
+			}
+			
+			function dumpDbToSpreadSheet(){
+				
+			}
+			
 		</script>
 	</head>
 	
-	<body>
+	<body id="wizardBody">
 		<form id="loginFrm" name="loginFrm">
 			<table id='loginFrmTbl'>
 				<tr>
@@ -67,5 +164,31 @@
 				</tr>
 			</table>
 		</form>
+		
+		<table id='dbConfigFrm' name='dbConfigFrm' class='dbConfigFrmCss'>
+				<tr>
+					<td>Host Name:</td>
+					<td><input type='text' id='hostTxt' name='hostTxt'/></td>
+				</tr>
+				<tr>
+					<td>Db User:</td>
+					<td><input type='text' id='dbUserTxt' name='dbUserTxt'/></td>
+				</tr>
+				<tr>
+					<td>Db Password:</td>
+					<td><input type='password' id='dbPassTxt' name='dbPassTxt'/></td>
+				</tr>
+				<tr>
+					<td>Database Name:</td>
+					<td><input type='text' id='dbNameTxt' name='dbNameTxt'/></td>
+				</tr>
+				<tr>
+					<td>Query:</td>
+					<td><textarea rows='10' cols='100' type='text' id='queryTxt' name='queryTxt'></textarea>  </td>
+				</tr>
+				<tr>
+					<td><input type='button' class ='dumpBtnCss' id='dumpBtn' name='dumpBtn' value="Dump to SpreadSheet"/></td>
+				</tr>
+			</table>
 	</body>
 </html>
